@@ -22,11 +22,8 @@ def anchor(parser, token):
     bits = [b.strip('"\'') for b in token.split_contents()]
     if len(bits) < 2:
         raise TemplateSyntaxError, "anchor tag takes at least 1 argument"
-    try:
-        title = bits[2]
-    except IndexError:
-        title = bits[1].capitalize()
-    return SortAnchorNode(bits[1].strip(), title.strip())
+    sort_tag = ','.join(bits[1:-1])
+    return SortAnchorNode(sort_tag, bits[-1].strip())
     
 
 class SortAnchorNode(template.Node):
@@ -94,9 +91,9 @@ class SortedDataNode(template.Node):
         key = self.queryset_var.var
         value = self.queryset_var.resolve(context)
         order_by = context['request'].field
-        if len(order_by) > 1:
+        if len(order_by) > 0:
             try:
-                context[key] = value.order_by(order_by)
+                context[key] = value.order_by(*order_by)
             except template.TemplateSyntaxError:
                 if INVALID_FIELD_RAISES_404:
                     raise Http404('Invalid field sorting. If DEBUG were set to ' +
